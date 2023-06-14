@@ -2,7 +2,9 @@
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
-            [ring.util.response :as ring-resp]))
+            [ring.util.response :as ring-resp]
+            [bank-api.account-repository :as account-repository]
+            [bank-api.logic :as logic]))
 
 (defn about-page
   [request]
@@ -14,6 +16,25 @@
   [request]
   (ring-resp/response "Hello World!"))
 
+(defn create-account
+  [{account-creation-data :json-params}]
+  (let [new-account (logic/new-account account-creation-data)]
+    (account-repository/upsert! new-account)
+    (ring-resp/response new-account)))
+
+(defn account-by-id
+  [{{:keys [id]} :path-params}]
+  (let [account (account-repository/with-id! (parse-uuid id))]
+    (ring-resp/response account)))
+
+(defn deposit
+  [{{:keys [id]} :path-params
+    deposit-data :json-params}]
+  (-> (account-repository/with-id! (parse-uuid id))
+      (logic/deposit deposit-data)
+      account-repository/upsert!)
+  {:status 204})
+
 ;; Defines "/" and "/about" routes with their associated :get handlers.
 ;; The interceptors defined after the verb map (e.g., {:get home-page}
 ;; apply to / and its children (/about).
@@ -21,7 +42,10 @@
 
 ;; Tabular routes
 (def routes #{["/" :get (conj common-interceptors `home-page)]
-              ["/about" :get (conj common-interceptors `about-page)]})
+              ["/about" :get (conj common-interceptors `about-page)]
+              ["/accounts" :post (conj common-interceptors `create-account)]
+              ["/accounts/:id" :get (conj common-interceptors `account-by-id)]
+              ["/accounts/:id/deposits" :post (conj common-interceptors `deposit)]})
 
 ;; Map-based routes
 ;(def routes `{"/" {:interceptors [(body-params/body-params) http/html-body]
