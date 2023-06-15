@@ -3,7 +3,6 @@
             [io.pedestal.http :as http]
             [io.pedestal.http.body-params :as body-params]
             [io.pedestal.http.content-negotiation :as content-negotiation]
-            [ring.util.response :as ring-resp]
             [bank-api.account-repository :as account-repository]
             [bank-api.logic :as logic]))
 
@@ -11,12 +10,14 @@
   [{account-creation-data :json-params}]
   (let [new-account (logic/new-account account-creation-data)]
     (account-repository/upsert! new-account)
-    (ring-resp/response new-account)))
+    {:status  200
+     :body new-account}))
 
 (defn account-by-id
   [{{:keys [id]} :path-params}]
   (let [account (account-repository/with-id! (parse-uuid id))]
-    (ring-resp/response account)))
+    {:status  200
+     :body account}))
 
 (defn deposit
   [{{:keys [id]} :path-params
@@ -25,6 +26,15 @@
       (logic/deposit amount)
       account-repository/upsert!)
   {:status 204})
+
+(defn withdrawal
+  [{{:keys [id]} :path-params
+    {:keys [amount]} :json-params}]
+  (-> (account-repository/with-id! (parse-uuid id))
+      (logic/withdrawal amount)
+      account-repository/upsert!)
+  {:status 204})
+
 
 (def supported-types ["application/json"
                       "application/edn"
@@ -65,7 +75,8 @@
 
 (def routes #{["/accounts" :post (conj common-interceptors `create-account)]
               ["/accounts/:id" :get (conj common-interceptors `account-by-id)]
-              ["/accounts/:id/deposits" :post (conj common-interceptors `deposit)]})
+              ["/accounts/:id/deposits" :post (conj common-interceptors `deposit)]
+              ["/accounts/:id/withdrawals" :post (conj common-interceptors `withdrawal)]})
 
 (def service {:env :prod
               ::http/routes routes

@@ -10,3 +10,8 @@
   [account
    amount]
   (update account :balance + amount))
+
+(defn withdrawal
+  [account
+   amount]
+  (update account :balance - amount))
