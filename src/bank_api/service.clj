@@ -35,6 +35,15 @@
       account-repository/upsert!)
   {:status 204})
 
+(defn transfer
+  [{{:keys [id-origin id-destiny amount]} :json-params}]
+  (let [account-origin (account-repository/with-id! (parse-uuid id-origin))
+        account-destiny (account-repository/with-id! (parse-uuid id-destiny))]
+  (account-repository/upsert! (logic/withdrawal account-origin amount))
+  (account-repository/upsert! (logic/deposit account-destiny amount)))
+  {:status 204})
+
+
 
 (def supported-types ["application/json"
                       "application/edn"
@@ -76,12 +85,13 @@
 (def routes #{["/accounts" :post (conj common-interceptors `create-account)]
               ["/accounts/:id" :get (conj common-interceptors `account-by-id)]
               ["/accounts/:id/deposits" :post (conj common-interceptors `deposit)]
-              ["/accounts/:id/withdrawals" :post (conj common-interceptors `withdrawal)]})
+              ["/accounts/:id/withdrawals" :post (conj common-interceptors `withdrawal)]
+              ["/transfers" :post (conj common-interceptors `transfer)]})
 
 (def service {:env :prod
               ::http/routes routes
               ::http/type :jetty
-              ::http/port 8080
+              ::http/port 8081
               ::http/container-options {:h2c? true
                                         :h2? false
                                         :ssl? false}})
