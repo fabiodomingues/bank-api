@@ -8,5 +8,5 @@
 
 (defn deposit
   [account
-   {:keys [amount]}]
+   amount]
   (update account :balance + amount))

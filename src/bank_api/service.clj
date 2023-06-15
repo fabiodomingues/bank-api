@@ -20,9 +20,9 @@
 
 (defn deposit
   [{{:keys [id]} :path-params
-    deposit-data :json-params}]
+    {:keys [amount]} :json-params}]
   (-> (account-repository/with-id! (parse-uuid id))
-      (logic/deposit deposit-data)
+      (logic/deposit amount)
       account-repository/upsert!)
   {:status 204})
 
