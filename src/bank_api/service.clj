@@ -1,6 +1,8 @@
 (ns bank-api.service
-  (:require [io.pedestal.http :as http]
+  (:require [clojure.data.json :as json]
+            [io.pedestal.http :as http]
             [io.pedestal.http.body-params :as body-params]
+            [io.pedestal.http.content-negotiation :as content-negotiation]
             [ring.util.response :as ring-resp]
             [bank-api.account-repository :as account-repository]
             [bank-api.logic :as logic]))
@@ -24,7 +26,42 @@
       account-repository/upsert!)
   {:status 204})
 
-(def common-interceptors [(body-params/body-params)])
+(def supported-types ["application/json"
+                      "application/edn"
+                      "text/plain"
+                      "text/html"])
+
+(def content-negotiation-interceptor (content-negotiation/negotiate-content supported-types))
+
+(defn accepted-type
+  [context]
+  (get-in context [:request :accept :field] "text/plain"))
+
+(defn transform-content
+  [body content-type]
+  (case content-type
+    "text/html"        body
+    "text/plain"       body
+    "application/edn"  (pr-str body)
+    "application/json" (json/write-str body)))
+
+(defn coerce-to
+  [response content-type]
+  (-> response
+      (update :body transform-content content-type)
+      (assoc-in [:headers "Content-Type"] content-type)))
+
+(def coerce-body-response
+  {:name ::coerce-body-response
+   :leave
+   (fn [context]
+     (if (get-in context [:response :headers "Content-Type"])
+       context
+       (update-in context [:response] coerce-to (accepted-type context))))})
+
+(def common-interceptors [coerce-body-response
+                          content-negotiation-interceptor
+                          (body-params/body-params)])
 
 (def routes #{["/accounts" :post (conj common-interceptors `create-account)]
               ["/accounts/:id" :get (conj common-interceptors `account-by-id)]
