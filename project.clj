@@ -10,7 +10,9 @@
                  [org.slf4j/jul-to-slf4j "1.7.35"]
                  [org.slf4j/jcl-over-slf4j "1.7.35"]
                  [org.slf4j/log4j-over-slf4j "1.7.35"]
-                 [org.clojure/data.json "2.4.0"]]
+                 [org.clojure/data.json "2.4.0"]
+                 [prismatic/schema "1.4.1"]
+                 ]
   :min-lein-version "2.0.0"
   :resource-paths ["config", "resources"]
   :profiles {:dev {:aliases {"run-dev" ["trampoline" "run" "-m" "bank-api.server/run-dev"]}

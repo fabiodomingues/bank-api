@@ -4,7 +4,14 @@
             [io.pedestal.http.body-params :as body-params]
             [io.pedestal.http.content-negotiation :as content-negotiation]
             [bank-api.account-repository :as account-repository]
-            [bank-api.logic :as logic]))
+            [bank-api.logic :as logic]
+            [schema.core :as s]))
+
+
+(defn valid-cpf?
+  [cpf]
+  (boolean (re-matches #"\d{3}\.\d{3}\.\d{3}-\d{2}" cpf)))
+
 
 (defn create-account
   [{account-creation-data :json-params}]

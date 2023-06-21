@@ -38,3 +38,9 @@
         "X-Permitted-Cross-Domain-Policies" "none"
         "Content-Security-Policy" "object-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'strict-dynamic' https: http:;"})))
 
+(deftest is-valid-cpf-test
+  (is (false? (service/valid-cpf? "12345678910"))) 
+  (is  (false? (service/valid-cpf? "")))
+  (is  (false? (service/valid-cpf? "xyz.456.789-10")))
+  (is  (true? (service/valid-cpf? "123.456.789-10")))
+   )
