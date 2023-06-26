@@ -64,3 +64,17 @@
 
 (deftest new-invalid-account-test
   (is (thrown? Exception (logic/new-account {:name "Jade" :cpf "1"}))))
+
+
+(deftest deposit-test
+  (let [account (logic/new-account {:name "Jade"})]
+    (is (= (logic/deposit account 10) (update account :balance + 10)))
+    (is (= (logic/deposit account 0) account))
+    (is (= (logic/deposit account 11.93) (update account :balance + 11.93)))
+))
+
+(deftest withdrawal-test
+  (let [account (logic/new-account {:name "Jade"})]
+    (is (= (logic/withdrawal account 10) (update account :balance - 10)))
+    (is (= (logic/withdrawal account 0) account))
+    (is (= (logic/withdrawal account 11.93) (update account :balance - 11.93)))))
