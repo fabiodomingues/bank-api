@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [io.pedestal.test :refer :all]
             [io.pedestal.http :as bootstrap]
-            [bank-api.service :as service]))
+            [bank-api.service :as service]
+            [bank-api.logic :as logic]))
 
 (def service
   (::bootstrap/service-fn (bootstrap/create-servlet service/service)))
@@ -44,3 +45,22 @@
   (is  (false? (service/valid-cpf? "xyz.456.789-10")))
   (is  (true? (service/valid-cpf? "123.456.789-10")))
    )
+
+(deftest new-valid-account-test
+  (let [new-account (logic/new-account {:name "Jade" :cpf "123.456.789-10"})]
+    (is (uuid? (:id new-account)))
+    (is (= "Jade" (:name new-account)))
+    (is (= "123.456.789-10" (:cpf new-account)))
+    (is (= 0M (:balance new-account))) 
+    ))
+
+(deftest new-valid-account-without-cpf-test
+  (let [new-account (logic/new-account {:name "Jade"})]
+    (is (uuid? (:id new-account)))
+    (is (= "Jade" (:name new-account)))
+    (is (nil? (:cpf new-account)))
+    (is (= 0M (:balance new-account)))))
+
+
+(deftest new-invalid-account-test
+  (is (thrown? Exception (logic/new-account {:name "Jade" :cpf "1"}))))
